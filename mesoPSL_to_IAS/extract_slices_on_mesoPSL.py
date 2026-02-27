@@ -221,17 +221,63 @@ def z_to_group_name(z, ndp=3):
     fmt = f"{{:.{ndp}f}}".format(float(z))
     return "zsim_" + fmt.replace(".", "p")
 
-def save_slices_h5(
-    h5_path,
-    sim_name,
-    z,
-    box_size_mpc,
-    delta_mpc,
-    slices,                 
-    slices_meta,           
-    bin_factor=None,
-    demean=True,
-    overwrite_group=False):
+def save_slices_h5(h5_path, sim_name, z, box_size_mpc, delta_mpc, slices, slices_meta, bin_factor=None, demean=True, overwrite_group=False):
+    """
+    Save extracted 2D slices of a 3D simulation cube into an HDF5 file.
+    If the file already exists, it is opened in append mode.
+    The data are stored under a group named according to the redshift, e.g. "zsim_7p431"
+
+    Parameters
+    ----------
+    h5_path : str or Path
+        Output HDF5 file path. Parent directories are created if needed.
+
+    sim_name : str or int
+        Simulation identifier stored as a file-level attribute.
+
+    z : float
+        Redshift of the cube.
+
+    box_size_mpc : float
+        Simulation box size in comoving Mpc.
+
+    delta_mpc : float
+        Mpc separation between slices.
+
+    slices : array-like, shape (n_slices, Ny, Nx)
+        3D array containing 2D slice data.
+
+    slices_meta : list of dict
+        Metadata for each slice. Each dictionary must contain:
+            - "axis"      : str
+            - "slice_idx" : int
+            - "r_mpc"     : float
+
+    bin_factor : int, optional
+        Spatial binning factor applied before saving.
+
+    demean : bool, default=True
+        Whether slices were mean-subtracted prior to saving.
+
+    overwrite_group : bool, default=False
+        If True, an existing redshift group will be deleted and replaced.
+        If False, a ValueError is raised if the group already exists.
+
+    Returns
+    -------
+    h5_path : str
+        Path to the saved HDF5 file.
+
+    gname : str
+        Name of the redshift group created inside the file.
+
+    Notes
+    -----
+    - Data are stored in float32 format.
+    - The file is opened in append mode ("a"), so multiple redshift
+      groups can coexist in the same file.
+
+    """
 
     h5_path = Path(h5_path)
     h5_path.parent.mkdir(parents=True, exist_ok=True)
